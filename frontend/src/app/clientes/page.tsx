@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { apiService } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -13,73 +15,30 @@ import {
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
 
-type Client = {
-  id: number;
-  nombre: string;
-  correo: string;
-  telefono: string;
-  celular?: string;
-  nit: string;
-  documento: string;
-  numeroDocumento: string;
-  tipoPersona: string;
-  sexo?: string;
-  ciudad: string;
-  ncr?: string;
-  fechaRegistro: string;
-};
-
-const initialClients: Client[] = [
-  {
-    id: 1,
-    nombre: "Johep Daniel Gradis Cortes",
-    correo: "johepdg07@icloud.com",
-    telefono: "+503 6103 1008",
-    celular: "+503 7890 1234",
-    nit: "1217-120703-105-9",
-    documento: "DUI",
-    numeroDocumento: "06540720-9",
-    tipoPersona: "Natural",
-    sexo: "Masculino",
-    ciudad: "San Salvador",
-    ncr: "123456",
-    fechaRegistro: "2025-01-01",
-  },
-  {
-    id: 2,
-    nombre: "María Elena Rodríguez",
-    correo: "maria.rodriguez@email.com",
-    telefono: "+503 2234 5678",
-    celular: "+503 7123 4567",
-    nit: "0614-120485-102-8",
-    documento: "DUI",
-    numeroDocumento: "03456789-1",
-    tipoPersona: "Natural",
-    sexo: "Femenino",
-    ciudad: "Santa Ana",
-    ncr: "654321",
-    fechaRegistro: "2025-01-02",
-  },
-  {
-    id: 3,
-    nombre: "Empresa Tecnológica S.A. de C.V.",
-    correo: "info@empresa.com",
-    telefono: "+503 2500 1000",
-    nit: "0614-250184-001-3",
-    documento: "NIT",
-    numeroDocumento: "0614-250184-001-3",
-    tipoPersona: "Jurídica",
-    ciudad: "San Salvador",
-    ncr: "987654",
-    fechaRegistro: "2025-01-03",
-  },
-];
-
 export default function ClientesRegistrados() {
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const { user } = useUser();
+  const [clients, setClients] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const clientsData = await apiService.getClients();
+        setClients(clientsData);
+      } catch (error) {
+        console.error("Error loading clients:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      loadClients();
+    }
+  }, [user]);
 
   // Filter clients based on search term
   const filteredClients = clients.filter(
@@ -91,17 +50,25 @@ export default function ClientesRegistrados() {
   );
 
   // Handle delete client
-  const handleDeleteClient = (id: number) => {
+  const handleDeleteClient = (id) => {
     if (confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
       setClients(clients.filter((client) => client.id !== id));
     }
   };
 
   // View client details
-  const handleViewDetails = (client: Client) => {
+  const handleViewDetails = (client) => {
     setSelectedClient(client);
     setShowDetails(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Cargando clientes...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -383,7 +350,9 @@ export default function ClientesRegistrados() {
                       <label className="text-sm text-gray-500">
                         Número de Documento
                       </label>
-                      <p className="font-medium">{selectedClient.numeroDocumento}</p>
+                      <p className="font-medium">
+                        {selectedClient.numeroDocumento}
+                      </p>
                     </div>
                     <div>
                       <label className="text-sm text-gray-500">NIT</label>

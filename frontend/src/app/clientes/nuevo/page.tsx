@@ -9,6 +9,7 @@ import {
   faCheck,
   faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
+import Image from "next/image";
 
 export default function NuevoCliente() {
   const [form, setForm] = useState({
@@ -116,10 +117,12 @@ export default function NuevoCliente() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <img
+            <Image
               src="https://randomuser.me/api/portraits/men/32.jpg"
               alt="User"
-              className="w-8 h-8 rounded-full"
+              width={32}
+              height={32}
+              className="rounded-full"
             />
             <div>
               <div className="font-bold">Name</div>
@@ -199,7 +202,7 @@ export default function NuevoCliente() {
                           checked={form.sexo === "Masculino"}
                           onChange={handleChange}
                           className="mr-2 text-blue-600"
-                        />
+                        />{" "}
                         Masculino
                       </label>
                       <label className="flex items-center">

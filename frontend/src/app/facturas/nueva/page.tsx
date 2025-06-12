@@ -11,6 +11,15 @@ import {
   faTrash,
   faSave,
 } from "@fortawesome/free-solid-svg-icons";
+import { ApiClient } from "@/lib/api";
+import { useRouter } from "next/navigation";
+
+interface InvoiceResponse {
+  dte: string;
+  id: string;
+  total: number;
+  // Add other response fields as needed
+}
 
 type InvoiceItem = {
   id: number;
@@ -65,6 +74,8 @@ export default function NuevaFactura() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showClientSelector, setShowClientSelector] = useState(false);
+
+  const router = useRouter();
 
   // Mock clients for selection
   const availableClients = [
@@ -202,25 +213,26 @@ export default function NuevaFactura() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call - in real implementation, backend will generate DTE, estado, fecha
+      // Prepare invoice data for API
       const invoiceData = {
-        ...form,
-        dte: `${Date.now()}-GENERATED-DTE-UUID`, // Backend will generate real DTE
-        estado: "PROCESADO", // Backend will determine status
-        fecha: new Date().toISOString().split("T")[0], // Backend will set creation date
-        total: `$${calculateInvoiceTotal().toFixed(2)}`,
+        clientId: form.cliente, // You'll need to store client ID instead of name
+        tipo: form.tipo,
+        items: form.items.map((item) => ({
+          descripcion: item.descripcion,
+          cantidad: item.cantidad,
+          precioUnitario: item.precioUnitario,
+        })),
       };
 
-      console.log("Invoice to submit:", invoiceData);
+      // Make actual API call
+      const createdInvoice = await ApiClient.post("/invoices", invoiceData) as InvoiceResponse;
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      alert(`¡Factura creada exitosamente! DTE: ${createdInvoice.dte}`);
 
-      alert("¡Factura creada exitosamente!");
-
-      // Reset form or redirect
-      // router.push("/facturas");
-    } catch {
+      // Redirect to invoices list
+      router.push("/facturas");
+    } catch (error) {
+      console.error("Error creating invoice:", error);
       alert("Error al crear la factura. Intenta nuevamente.");
     } finally {
       setIsSubmitting(false);
