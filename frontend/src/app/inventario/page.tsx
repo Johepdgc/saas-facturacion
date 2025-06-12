@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { apiService } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -25,51 +28,25 @@ type InventoryItem = {
   fechaIngreso: string;
 };
 
-// Sample inventory data
-const initialInventory: InventoryItem[] = [
-  {
-    id: 1,
-    codigo: "PROD001",
-    nombre: "Laptop Dell Inspiron",
-    descripcion: "Laptop Dell Inspiron 15 3000 Series",
-    categoria: "Electrónicos",
-    precio: 650.0,
-    stock: 15,
-    stockMinimo: 5,
-    unidad: "Unidad",
-    proveedor: "Dell Inc.",
-    fechaIngreso: "2025-01-01",
-  },
-  {
-    id: 2,
-    codigo: "PROD002",
-    nombre: "Mouse Inalámbrico",
-    descripcion: "Mouse inalámbrico Logitech M185",
-    categoria: "Accesorios",
-    precio: 25.99,
-    stock: 45,
-    stockMinimo: 10,
-    unidad: "Unidad",
-    proveedor: "Logitech",
-    fechaIngreso: "2025-01-02",
-  },
-  {
-    id: 3,
-    codigo: "PROD003",
-    nombre: "Teclado Mecánico",
-    descripcion: "Teclado mecánico RGB Corsair K70",
-    categoria: "Accesorios",
-    precio: 120.0,
-    stock: 3,
-    stockMinimo: 5,
-    unidad: "Unidad",
-    proveedor: "Corsair",
-    fechaIngreso: "2025-01-03",
-  },
-];
-
 export default function Inventario() {
-  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const { getToken } = useAuth();
+  const { user } = useUser();
+
+  useEffect(() => {
+    const loadInventory = async () => {
+      try {
+        const token = await getToken();
+        const items = await apiService.getInventory(token);
+        setInventory(items);
+      } catch (error) {
+        console.error("Error al cargar el inventario:", error);
+      }
+    };
+    if (user) {
+      loadInventory();
+    }
+  }, [user, getToken]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
@@ -109,32 +86,29 @@ export default function Inventario() {
   };
 
   // Add new item
-  const handleAddItem = (e: React.FormEvent) => {
+  const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    const id = Math.max(...inventory.map((item) => item.id)) + 1;
-    setInventory([
-      ...inventory,
-      {
-        ...newItem,
-        id,
-        precio: Number(newItem.precio),
-        stock: Number(newItem.stock),
-        stockMinimo: Number(newItem.stockMinimo),
-      },
-    ]);
-    setNewItem({
-      codigo: "",
-      nombre: "",
-      descripcion: "",
-      categoria: "",
-      precio: 0,
-      stock: 0,
-      stockMinimo: 0,
-      unidad: "Unidad",
-      proveedor: "",
-      fechaIngreso: new Date().toISOString().split("T")[0],
-    });
-    setShowAddForm(false);
+    try {
+      const token = await getToken();
+      const createdItem = await apiService.createInventoryItem(newItem, token);
+      setInventory([...inventory, createdItem]);
+      setNewItem({
+        codigo: "",
+        nombre: "",
+        descripcion: "",
+        categoria: "",
+        precio: 0,
+        stock: 0,
+        stockMinimo: 0,
+        unidad: "Unidad",
+        proveedor: "",
+        fechaIngreso: new Date().toISOString().split("T")[0],
+      });
+      setShowAddForm(false);
+    } catch (error) {
+      console.error("Error al agregar producto:", error);
+      alert("Error al agregar producto. Intenta de nuevo.");
+    }
   };
 
   // Edit item
@@ -206,12 +180,12 @@ export default function Inventario() {
         {/* Title and Add Button */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">Inventario</h1>
-          <button
-            onClick={() => setShowAddForm(true)}
+          <Link
+            href="/inventario/nuevo"
             className="bg-black text-white px-5 py-2 rounded flex items-center gap-2 hover:bg-gray-800"
           >
             <FontAwesomeIcon icon={faPlus} /> Agregar Producto
-          </button>
+          </Link>
         </div>
 
         {/* Inventory Stats */}

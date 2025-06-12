@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 import { apiService } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,6 +17,7 @@ import {
 
 export default function ClientesRegistrados() {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +27,8 @@ export default function ClientesRegistrados() {
   useEffect(() => {
     const loadClients = async () => {
       try {
-        const clientsData = await apiService.getClients();
+        const token = await getToken();
+        const clientsData = await apiService.getClients(token);
         setClients(clientsData);
       } catch (error) {
         console.error("Error loading clients:", error);
@@ -38,7 +40,7 @@ export default function ClientesRegistrados() {
     if (user) {
       loadClients();
     }
-  }, [user]);
+  }, [user, getToken]);
 
   // Filter clients based on search term
   const filteredClients = clients.filter(
@@ -107,8 +109,7 @@ export default function ClientesRegistrados() {
           <div>
             <h1 className="text-4xl font-bold mb-2">Clientes Registrados</h1>
             <p className="text-gray-600">
-              Total:{" "}
-              {filteredClients.length} cliente
+              Total: {filteredClients.length} cliente
               {filteredClients.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -130,9 +131,7 @@ export default function ClientesRegistrados() {
               />
               <h3 className="text-lg font-semibold">Total Clientes</h3>
             </div>
-            <p className="text-3xl font-bold text-blue-600">
-              {clients.length}
-            </p>
+            <p className="text-3xl font-bold text-blue-600">{clients.length}</p>
           </div>
           <div className="bg-white rounded-xl shadow p-6">
             <div className="flex items-center gap-3 mb-2">
@@ -296,7 +295,9 @@ export default function ClientesRegistrados() {
                       <label className="text-sm text-gray-500">
                         Tipo de Persona
                       </label>
-                      <p className="font-medium">{selectedClient.tipoPersona}</p>
+                      <p className="font-medium">
+                        {selectedClient.tipoPersona}
+                      </p>
                     </div>
                     {selectedClient.sexo && (
                       <div>
@@ -356,7 +357,9 @@ export default function ClientesRegistrados() {
                     </div>
                     <div>
                       <label className="text-sm text-gray-500">NIT</label>
-                      <p className="font-medium font-mono">{selectedClient.nit}</p>
+                      <p className="font-medium font-mono">
+                        {selectedClient.nit}
+                      </p>
                     </div>
                     {selectedClient.ncr && (
                       <div>
@@ -376,7 +379,9 @@ export default function ClientesRegistrados() {
                       <label className="text-sm text-gray-500">
                         Fecha de Registro
                       </label>
-                      <p className="font-medium">{selectedClient.fechaRegistro}</p>
+                      <p className="font-medium">
+                        {selectedClient.fechaRegistro}
+                      </p>
                     </div>
                   </div>
                 </div>

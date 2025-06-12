@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { apiService } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -12,6 +14,7 @@ import {
 import Image from "next/image";
 
 export default function NuevoCliente() {
+  const { getToken } = useAuth();
   const [form, setForm] = useState({
     nombre: "",
     nit: "",
@@ -77,8 +80,8 @@ export default function NuevoCliente() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const token = await getToken();
+      await apiService.createClient(form, token);
 
       alert("Cliente creado exitosamente!");
 

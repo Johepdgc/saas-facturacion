@@ -6,10 +6,14 @@ import {
   Param,
   UseGuards,
   Request,
+  NotFoundException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { ClerkAuthGuard } from '../../auth/clerk.guard';
 import { AuthService } from '../../auth/auth.service';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 interface AuthenticatedRequest extends Request {
   user: { userId: string };
@@ -25,41 +29,62 @@ export class InvoicesController {
 
   @Post()
   async create(
-    @Body() createInvoiceDto: any,
+    @Body() createInvoiceDto: CreateInvoiceDto,
     @Request() req: AuthenticatedRequest,
   ) {
-    // Get user's company
-    const user = await this.authService.getCurrentUser(req.user.userId);
-    const companyId = user?.companies?.[0]?.id;
-
-    if (!companyId) {
-      throw new Error('No active company found');
-    }
-
+    const companyId = await this.getCompanyId(req);
     return this.invoicesService.create(createInvoiceDto, companyId);
   }
 
   @Get()
   async findAll(@Request() req: AuthenticatedRequest) {
-    const user = await this.authService.getCurrentUser(req.user.userId);
-    const companyId = user?.companies?.[0]?.id;
-
-    if (!companyId) {
-      return [];
-    }
-
+    const companyId = await this.getCompanyId(req);
     return this.invoicesService.findAll(companyId);
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    const companyId = await this.getCompanyId(req);
+    return this.invoicesService.findOne(id, companyId);
+  }
+
+  // 🔒 Método privado reutilizable
+  private async getCompanyId(req: AuthenticatedRequest): Promise<string> {
     const user = await this.authService.getCurrentUser(req.user.userId);
     const companyId = user?.companies?.[0]?.id;
 
     if (!companyId) {
-      throw new Error('No active company found');
+      throw new NotFoundException('No active company found');
     }
 
-    return this.invoicesService.findOne(id, companyId);
+    return companyId;
+  }
+
+  @Post(':id/firmar')
+  async validateAndSign(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const companyId = await this.getCompanyId(req);
+
+    try {
+      const { dte } = await this.invoicesService.validateDte(id, companyId);
+
+      // 🔜 En el siguiente paso: enviar este `dte` al microservicio de firma electrónica
+      return {
+        message: 'DTE is valid and ready for signing',
+        dte,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          message: 'DTE validation failed',
+          error: error.message,
+          details: error?.response?.errors || null,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

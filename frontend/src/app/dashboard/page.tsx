@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import { apiService } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
@@ -22,6 +22,7 @@ interface UserData {
 
 export default function Dashboard() {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [invoices, setInvoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,12 +30,13 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        const token = await getToken();
         // Sync user and get data
-        const syncedUser = await apiService.syncUser();
+        const syncedUser = await apiService.syncUser(token);
         setUserData(syncedUser);
 
         // Load invoices
-        const invoicesData = await apiService.getInvoices();
+        const invoicesData = await apiService.getInvoices(token);
         setInvoices(invoicesData);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
@@ -46,7 +48,7 @@ export default function Dashboard() {
     if (user) {
       loadData();
     }
-  }, [user]);
+  }, [user, getToken]);
 
   const getTodayInvoices = () => {
     const today = new Date().toISOString().split("T")[0];

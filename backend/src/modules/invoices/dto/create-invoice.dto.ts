@@ -1,39 +1,26 @@
-import {
-  IsString,
-  IsArray,
-  IsNumber,
-  IsEnum,
-  ValidateNested,
-} from 'class-validator';
+import { IsString, IsArray, IsNumber, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export enum InvoiceType {
-  FACTURA = 'FACTURA',
-  CREDITO_FISCAL = 'CREDITO_FISCAL',
-  NOTA_CREDITO = 'NOTA_CREDITO',
-  NOTA_DEBITO = 'NOTA_DEBITO',
-}
-
-export class CreateInvoiceItemDto {
+class ItemDto {
   @IsString()
-  descripcion: string;
+  description: string;
 
   @IsNumber()
-  cantidad: number;
+  quantity: number;
 
   @IsNumber()
-  precioUnitario: number;
+  price: number;
 }
 
 export class CreateInvoiceDto {
   @IsString()
-  clientId: string;
+  customerName: string;
 
-  @IsEnum(InvoiceType)
-  tipo: InvoiceType;
+  @IsString()
+  customerNIT: string;
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateInvoiceItemDto)
-  items: CreateInvoiceItemDto[];
+  @Type(() => ItemDto)
+  items: ItemDto[];
 }

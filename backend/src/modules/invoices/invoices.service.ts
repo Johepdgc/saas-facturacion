@@ -1,28 +1,30 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import * as schema from './schemas/fe-ccf-v3.schema.json';
+import { buildDteFromInvoice } from './utils/dte-builder';
 
 const IVA_RATE = 0.13;
-
-interface CreateInvoiceDto {
-  clientId: string;
-  items: {
-    description: string;
-    quantity: number;
-    unitPrice: number;
-    unit?: string;
-  }[];
-  [key: string]: any; // for other invoice fields like date, reference, etc.
-}
 
 @Injectable()
 export class InvoicesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createInvoiceDto: CreateInvoiceDto, companyId: string) {
-    const { clientId, items, ...invoiceMeta } = createInvoiceDto;
+  async create(data: CreateInvoiceDto, companyId: string) {
+    const { clientId, items, ...invoiceMeta } = data;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    if (!clientId) {
+      throw new BadRequestException('Client ID is required.');
+    }
+
+    if (!items || items.length === 0) {
       throw new BadRequestException('Invoice must contain at least one item.');
     }
 
@@ -53,7 +55,7 @@ export class InvoicesService {
         ...invoiceMeta,
         generationCode,
         transmissionTime,
-        clientId,
+        clientId: clientId as string,
         companyId,
         subtotal,
         iva,
@@ -64,11 +66,11 @@ export class InvoicesService {
             itemNumber: index + 1,
             description: item.description,
             quantity: item.quantity,
-            unitPrice: item.unitPrice,
+            unitPrice: Number(item.unitPrice),
             subtotal: item.quantity * item.unitPrice,
             taxes: item.quantity * item.unitPrice * IVA_RATE,
             total: item.quantity * item.unitPrice * (1 + IVA_RATE),
-            unit: item.unit ?? 'UNIDAD',
+            unit: (item.unit as string) ?? 'UNIDAD',
           })),
         },
       },
@@ -105,5 +107,27 @@ export class InvoicesService {
   private numberToWords(amount: number): string {
     // Replace this with a complete number-to-words conversion (in Spanish)
     return `${amount.toFixed(2)} DÓLARES`;
+  }
+
+  async validateDte(invoiceId: string, companyId: string) {
+    const invoice = await this.findOne(invoiceId, companyId);
+    if (!invoice) throw new NotFoundException('Invoice not found');
+
+    const dte = buildDteFromInvoice(invoice);
+
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+    const validate = ajv.compile(schema);
+
+    const isValid = validate(dte);
+
+    if (!isValid) {
+      throw new BadRequestException({
+        message: 'Invalid DTE format',
+        errors: validate.errors,
+      });
+    }
+
+    return { message: 'DTE is valid', dte };
   }
 }
