@@ -102,4 +102,26 @@ export class AuthService {
       data: companyData,
     });
   }
+
+  async getCurrentUser(clerkId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { clerkId },
+      include: {
+        companies: {
+          where: { isActive: true },
+          include: {
+            clients: { take: 5 },
+            invoices: { take: 5, orderBy: { createdAt: 'desc' } },
+            inventory: { take: 5 },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
 }

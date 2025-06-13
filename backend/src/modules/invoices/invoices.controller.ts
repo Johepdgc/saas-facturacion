@@ -11,8 +11,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
-import { ClerkAuthGuard } from '../../auth/clerk.guard';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService } from '../auth/auth.service';
+import { ClerkAuthGuard } from '../auth/clerk.guard';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 interface AuthenticatedRequest extends Request {

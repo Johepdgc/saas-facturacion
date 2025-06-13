@@ -8,9 +8,25 @@ export class ClientsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createClientDto: CreateClientDto, companyId: string) {
+    const {
+      name,
+      email,
+      phone,
+      address,
+      documentType,
+      documentNumber,
+      personType,
+    } = createClientDto;
+
     return this.prisma.client.create({
       data: {
-        ...createClientDto,
+        name,
+        email,
+        phone,
+        address,
+        documentType,
+        documentNumber,
+        personType,
         companyId,
       },
     });

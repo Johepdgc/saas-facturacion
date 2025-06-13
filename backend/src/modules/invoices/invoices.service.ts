@@ -55,7 +55,7 @@ export class InvoicesService {
         ...invoiceMeta,
         generationCode,
         transmissionTime,
-        clientId: clientId as string,
+        clientId,
         companyId,
         subtotal,
         iva,

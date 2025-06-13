@@ -10,8 +10,8 @@ import {
   Request,
 } from '@nestjs/common';
 import { ClientsService } from './clients.service';
-import { ClerkAuthGuard } from '../../auth/clerk.guard';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService } from '../auth/auth.service';
+import { ClerkAuthGuard } from '../auth/clerk.guard';
 import { Request as ExpressRequest } from 'express';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -95,7 +95,7 @@ export class ClientsController {
       throw new Error('No active company found');
     }
 
-    return this.clientsService.update(id, updateClientDto, companyId);
+    return this.clientsService.update(id, updateClientDto);
   }
 
   @Delete(':id')
@@ -109,6 +109,6 @@ export class ClientsController {
       throw new Error('No active company found');
     }
 
-    return this.clientsService.remove(id, companyId);
+    return this.clientsService.remove(id);
   }
 }

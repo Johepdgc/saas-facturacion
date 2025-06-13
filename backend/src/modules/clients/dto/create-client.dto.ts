@@ -3,4 +3,7 @@ export class CreateClientDto {
   email?: string;
   phone?: string;
   address?: string;
+  documentType: string;
+  documentNumber: string;
+  personType: string;
 }

@@ -1,26 +1,11 @@
-import { IsString, IsArray, IsNumber, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-
-class ItemDto {
-  @IsString()
+export class ItemDto {
   description: string;
-
-  @IsNumber()
   quantity: number;
-
-  @IsNumber()
-  price: number;
+  unitPrice: number;
+  unit?: string;
 }
 
 export class CreateInvoiceDto {
-  @IsString()
-  customerName: string;
-
-  @IsString()
-  customerNIT: string;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ItemDto)
+  clientId: string;
   items: ItemDto[];
 }

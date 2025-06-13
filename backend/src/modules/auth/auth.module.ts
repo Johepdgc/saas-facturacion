@@ -6,6 +6,6 @@ import { ClerkAuthGuard } from './clerk.guard';
 @Module({
   controllers: [AuthController],
   providers: [AuthService, ClerkAuthGuard],
-  exports: [ClerkAuthGuard],
+  exports: [ClerkAuthGuard, AuthService],
 })
 export class AuthModule {}
