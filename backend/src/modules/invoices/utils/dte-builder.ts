@@ -1,4 +1,45 @@
-export function buildDteFromInvoice(invoice: any) {
+export interface Invoice {
+  generationCode: string;
+  date?: string;
+  transmissionTime: string;
+  subtotal: number;
+  total: number;
+  inWords?: string;
+  company: {
+    nit: string;
+    nrc: string;
+    name: string;
+    activityCode?: string;
+    activityDescription?: string;
+    commercialName?: string;
+    phone?: string;
+    email?: string;
+    mhCode?: string;
+    localCode?: string;
+    department?: string;
+    municipality?: string;
+    address?: string;
+  };
+  client: {
+    nit: string;
+    name: string;
+    activityCode?: string;
+    activityDescription?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+    municipality?: string;
+    department?: string;
+  };
+  items: {
+    description: string;
+    quantity: number;
+    unit?: string;
+    unitPrice: number;
+  }[];
+}
+
+export function buildDteFromInvoice(invoice: Invoice) {
   return {
     identificacion: {
       version: '3',

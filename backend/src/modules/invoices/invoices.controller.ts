@@ -75,13 +75,32 @@ export class InvoicesController {
         message: 'DTE is valid and ready for signing',
         dte,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      let errorMessage = 'Unknown error';
+      let details: unknown[] | null = null;
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      if (typeof error === 'object' && error !== null && 'response' in error) {
+        const resp = (error as { response: unknown }).response;
+        if (
+          typeof resp === 'object' &&
+          resp !== null &&
+          'errors' in resp &&
+          Array.isArray((resp as { errors: unknown }).errors)
+        ) {
+          details = (resp as { errors: unknown[] }).errors;
+        }
+      }
+
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
           message: 'DTE validation failed',
-          error: error.message,
-          details: error?.response?.errors || null,
+          error: errorMessage,
+          details,
         },
         HttpStatus.BAD_REQUEST,
       );

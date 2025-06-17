@@ -9,7 +9,7 @@ import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import * as schema from './schemas/fe-ccf-v3.schema.json';
-import { buildDteFromInvoice } from './utils/dte-builder';
+import { buildDteFromInvoice, Invoice } from './utils/dte-builder';
 
 const IVA_RATE = 0.13;
 
@@ -110,10 +110,25 @@ export class InvoicesService {
   }
 
   async validateDte(invoiceId: string, companyId: string) {
-    const invoice = await this.findOne(invoiceId, companyId);
-    if (!invoice) throw new NotFoundException('Invoice not found');
+    const invoiceRaw = await this.findOne(invoiceId, companyId);
+    if (!invoiceRaw) throw new NotFoundException('Invoice not found');
 
-    const dte = buildDteFromInvoice(invoice);
+    // Convert Decimal fields to numbers
+    const invoice = {
+      ...invoiceRaw,
+      subtotal: invoiceRaw.subtotal.toNumber(),
+      iva: invoiceRaw.iva.toNumber(),
+      total: invoiceRaw.total.toNumber(),
+      items: invoiceRaw.items.map((item) => ({
+        ...item,
+        unitPrice: item.unitPrice.toNumber(),
+        subtotal: item.subtotal.toNumber(),
+        taxes: item.taxes.toNumber(),
+        total: item.total.toNumber(),
+      })),
+    };
+
+    const dte = buildDteFromInvoice(invoice as unknown as Invoice);
 
     const ajv = new Ajv({ allErrors: true });
     addFormats(ajv);

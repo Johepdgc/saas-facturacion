@@ -17,8 +17,8 @@ export default function PerfilPage() {
       try {
         const token = await getToken();
         const currentUser = await apiService.getCurrentUser(token);
-        setName(currentUser?.name || "");
-        setImageUrl(currentUser?.imageUrl || "");
+        setName(currentUser?.name ?? "");
+        setImageUrl(currentUser?.imageUrl ?? "");
       } catch (err) {
         console.error("Error al cargar el perfil", err);
       }
@@ -35,6 +35,8 @@ export default function PerfilPage() {
     try {
       const token = await getToken();
       await apiService.updateCurrentUser({ name }, token);
+      const currentUser = await apiService.getCurrentUser(token);
+      setName(currentUser?.name ?? "");
       alert("Perfil actualizado correctamente");
     } catch (err) {
       console.error("Error al guardar perfil", err);
@@ -60,7 +62,7 @@ export default function PerfilPage() {
             className="rounded-full"
           />
           <div>
-            <p className="text-lg font-semibold">{user?.fullName}</p>
+            <p className="text-lg font-semibold">{name}</p>
             <p className="text-sm text-gray-500">
               {user?.primaryEmailAddress?.emailAddress}
             </p>
@@ -77,6 +79,18 @@ export default function PerfilPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium text-sm mb-1">
+            Correo electrónico
+          </label>
+          <input
+            type="email"
+            className="w-full border px-4 py-2 rounded bg-gray-100 text-gray-500"
+            value={user?.primaryEmailAddress?.emailAddress ?? ""}
+            readOnly
           />
         </div>
 

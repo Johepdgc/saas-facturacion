@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,9 @@ async function bootstrap(): Promise<void> {
 
   // Global prefix for API routes
   app.setGlobalPrefix('api');
+
+  // Enable Prisma shutdown hooks
+  app.get(PrismaService).enableShutdownHooks(app);
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);

@@ -58,7 +58,7 @@ class ApiService {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      throw new Error(`API Error ${response.status}: ${response.statusText}`);
     }
 
     return response.json();
@@ -77,7 +77,7 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      throw new Error(`API Error ${response.status}: ${response.statusText}`);
     }
 
     return response.json();
@@ -96,7 +96,7 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      throw new Error(`API Error ${response.status}: ${response.statusText}`);
     }
 
     return response.json();
@@ -110,7 +110,7 @@ class ApiService {
     });
 
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      throw new Error(`API Error ${response.status}: ${response.statusText}`);
     }
 
     return response.json();
@@ -158,6 +158,30 @@ class ApiService {
 
   async getInventory(token?: string) {
     return this.get("/inventory", token);
+  }
+
+  async getClients(token?: string) {
+    return this.get("/clients", token);
+  }
+
+  async getCurrentUser(token?: string) {
+    return this.get("/auth/profile", token);
+  }
+
+  async signDte(payload: unknown) {
+    const response = await fetch("http://localhost:8113/firmardocumento", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Firma DTE Error ${response.status}: ${response.statusText}`
+      );
+    }
+
+    return response.json();
   }
 }
 

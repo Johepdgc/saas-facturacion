@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useUser, useAuth } from "@clerk/nextjs";
-import Image from "next/image";
+import { useUser, useAuth, auth } from "@clerk/nextjs";
+import UserHeader from "@/components/UserHeader";
 import { apiService } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import InvoicesTable from "@/components/InvoicesTable";
@@ -78,26 +78,7 @@ export default function Dashboard() {
             className="border border-gray-300 rounded px-4 py-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Buscar..."
           />
-          <div className="flex items-center gap-2">
-            <Image
-              src={
-                userData?.imageUrl ??
-                "https://randomuser.me/api/portraits/men/32.jpg"
-              }
-              alt="User"
-              width={32}
-              height={32}
-              className="w-8 h-8 rounded-full"
-            />
-            <div>
-              <div className="font-bold">
-                {userData?.firstName} {userData?.lastName}
-              </div>
-              <div className="text-xs text-gray-400">
-                {company?.name ?? "Mi Empresa"}
-              </div>
-            </div>
-          </div>
+          <UserHeader />
         </div>
 
         <h1 className="text-4xl font-bold mb-8">

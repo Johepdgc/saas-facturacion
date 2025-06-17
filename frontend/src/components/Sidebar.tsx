@@ -1,3 +1,5 @@
+"use client";
+import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -7,14 +9,13 @@ import {
   faBox,
   faPlus,
   faList,
-  faQuestionCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
-export default function Sidebar({ active }: { active: string }) {
+export default function Sidebar({ active }: Readonly<{ active: string }>) {
   return (
     <aside className="w-72 bg-gray-100 min-h-screen flex flex-col justify-between border-r border-gray-200 shadow-sm">
       <div className="px-8 py-8">
-        {/* Logo/Title */}
+        {/* Logo */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-gray-800 leading-tight">
             Facturación
@@ -25,7 +26,6 @@ export default function Sidebar({ active }: { active: string }) {
 
         {/* Navigation */}
         <nav className="flex flex-col gap-1">
-          {/* Inicio */}
           <Link
             href="/dashboard"
             className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${
@@ -38,7 +38,6 @@ export default function Sidebar({ active }: { active: string }) {
             <span>Inicio</span>
           </Link>
 
-          {/* Facturas */}
           <Link
             href="/facturas"
             className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${
@@ -51,7 +50,6 @@ export default function Sidebar({ active }: { active: string }) {
             <span>Facturas</span>
           </Link>
 
-          {/* Clientes Section */}
           <div className="mb-2">
             <div className="flex items-center gap-3 py-3 px-4 text-gray-700 font-medium">
               <FontAwesomeIcon icon={faUsers} className="text-lg w-5" />
@@ -83,7 +81,6 @@ export default function Sidebar({ active }: { active: string }) {
             </div>
           </div>
 
-          {/* Inventario */}
           <Link
             href="/inventario"
             className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${
@@ -98,11 +95,16 @@ export default function Sidebar({ active }: { active: string }) {
         </nav>
       </div>
 
-      {/* Help Section */}
+      {/* User actions */}
       <div className="px-8 py-6 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center gap-3 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
-          <FontAwesomeIcon icon={faQuestionCircle} className="text-lg" />
-          <span className="text-sm">¿Necesitas ayuda?</span>
+        <div className="flex justify-between items-center">
+          <Link
+            href="/perfil"
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Mi perfil
+          </Link>
+          <UserButton />
         </div>
       </div>
     </aside>

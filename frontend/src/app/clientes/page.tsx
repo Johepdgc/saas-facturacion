@@ -3,6 +3,24 @@ import { useState, useEffect } from "react";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { apiService } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
+import UserHeader from "@/components/UserHeader";
+
+interface Client {
+  id: string;
+  nombre: string;
+  correo: string;
+  nit: string;
+  telefono: string;
+  ciudad: string;
+  documento: string;
+  numeroDocumento: string;
+  tipoPersona: "Natural" | "Jurídica";
+  fechaRegistro: string;
+  sexo?: string;
+  celular?: string;
+  ncr?: string;
+}
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -18,7 +36,7 @@ import {
 export default function ClientesRegistrados() {
   const { user } = useUser();
   const { getToken } = useAuth();
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState(null);
@@ -28,7 +46,7 @@ export default function ClientesRegistrados() {
     const loadClients = async () => {
       try {
         const token = await getToken();
-        const clientsData = await apiService.getClients(token);
+        const clientsData = await apiService.getClients(token ?? undefined);
         setClients(clientsData);
       } catch (error) {
         console.error("Error loading clients:", error);
@@ -91,17 +109,7 @@ export default function ClientesRegistrados() {
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <img
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-              alt="User"
-              className="w-8 h-8 rounded-full"
-            />
-            <div>
-              <div className="font-bold">Name</div>
-              <div className="text-xs text-gray-400">Description</div>
-            </div>
-          </div>
+          <UserHeader />
         </div>
 
         {/* Title and Stats */}

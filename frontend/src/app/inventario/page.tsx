@@ -1,4 +1,5 @@
 "use client";
+import UserHeader from "@/components/UserHeader";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth, useUser } from "@clerk/nextjs";
@@ -111,30 +112,44 @@ export default function Inventario() {
     }
   };
 
-  // Edit item
-  const handleEditItem = (e: React.FormEvent) => {
+  // Edit item (actualiza en backend)
+  const handleEditItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingItem) {
-      setInventory(
-        inventory.map((item) =>
-          item.id === editingItem.id
-            ? {
-                ...editingItem,
-                precio: Number(editingItem.precio),
-                stock: Number(editingItem.stock),
-                stockMinimo: Number(editingItem.stockMinimo),
-              }
-            : item
-        )
-      );
-      setEditingItem(null);
+      try {
+        const token = await getToken();
+        const updated = await apiService.updateInventoryItem(
+          editingItem.id,
+          {
+            ...editingItem,
+            precio: Number(editingItem.precio),
+            stock: Number(editingItem.stock),
+            stockMinimo: Number(editingItem.stockMinimo),
+          },
+          token
+        );
+        setInventory(
+          inventory.map((item) => (item.id === updated.id ? updated : item))
+        );
+        setEditingItem(null);
+      } catch (error) {
+        console.error("Error al actualizar producto:", error);
+        alert("Error al actualizar producto. Intenta de nuevo.");
+      }
     }
   };
 
-  // Delete item
-  const handleDeleteItem = (id: number) => {
+  // Delete item (elimina en backend)
+  const handleDeleteItem = async (id: number) => {
     if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-      setInventory(inventory.filter((item) => item.id !== id));
+      try {
+        const token = await getToken();
+        await apiService.deleteInventoryItem(id, token);
+        setInventory(inventory.filter((item) => item.id !== id));
+      } catch (error) {
+        console.error("Error al eliminar producto:", error);
+        alert("Error al eliminar producto. Intenta de nuevo.");
+      }
     }
   };
 
@@ -164,17 +179,7 @@ export default function Inventario() {
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <img
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-              alt="User"
-              className="w-8 h-8 rounded-full"
-            />
-            <div>
-              <div className="font-bold">Name</div>
-              <div className="text-xs text-gray-400">Description</div>
-            </div>
-          </div>
+          <UserHeader />
         </div>
 
         {/* Title and Add Button */}

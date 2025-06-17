@@ -11,7 +11,7 @@ import {
   faCheck,
   faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
-import Image from "next/image";
+import UserHeader from "@/components/UserHeader";
 
 export default function NuevoCliente() {
   const { getToken } = useAuth();
@@ -81,7 +81,13 @@ export default function NuevoCliente() {
 
     try {
       const token = await getToken();
-      await apiService.createClient(form, token);
+      const clientData = {
+        name: form.nombre,
+        email: form.correo,
+        phone: form.telefono,
+        address: form.ciudad,
+      };
+      await apiService.createClient(clientData, token ?? undefined);
 
       alert("Cliente creado exitosamente!");
 
@@ -119,19 +125,7 @@ export default function NuevoCliente() {
               placeholder="Buscar..."
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Image
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-              alt="User"
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
-            <div>
-              <div className="font-bold">Name</div>
-              <div className="text-xs text-gray-400">Description</div>
-            </div>
-          </div>
+          <UserHeader />
         </div>
 
         {/* Title and Navigation */}

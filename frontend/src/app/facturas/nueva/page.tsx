@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
 import Sidebar from "@/components/Sidebar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -11,7 +12,7 @@ import {
   faTrash,
   faSave,
 } from "@fortawesome/free-solid-svg-icons";
-import { ApiClient } from "@/lib/api";
+import { apiService } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 interface InvoiceResponse {
@@ -76,31 +77,24 @@ export default function NuevaFactura() {
   const [showClientSelector, setShowClientSelector] = useState(false);
 
   const router = useRouter();
+  const { getToken } = useAuth();
 
-  // Mock clients for selection
-  const availableClients = [
-    {
-      nombre: "Johep Daniel Gradis Cortes",
-      tipoDocumento: "DUI",
-      documento: "06540720-9",
-      correo: "johepdg07@icloud.com",
-      telefono: "+503 6103 1008",
-    },
-    {
-      nombre: "María Elena Rodríguez",
-      tipoDocumento: "DUI",
-      documento: "03456789-1",
-      correo: "maria.rodriguez@email.com",
-      telefono: "+503 2234 5678",
-    },
-    {
-      nombre: "Empresa Tecnológica S.A. de C.V.",
-      tipoDocumento: "NIT",
-      documento: "0614-250184-001-3",
-      correo: "info@empresa.com",
-      telefono: "+503 2500 1000",
-    },
-  ];
+  // Estado para clientes reales
+  const [clients, setClients] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const token = await getToken();
+        const fetchedClients = await apiService.getClients(token);
+        setClients(fetchedClients);
+      } catch (err) {
+        console.error("Error al cargar clientes:", err);
+      }
+    };
+    fetchClients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getToken]);
 
   // Calculate item total
   const calculateItemTotal = (cantidad: number, precioUnitario: number) => {
@@ -113,7 +107,7 @@ export default function NuevaFactura() {
   };
 
   // Handle client selection
-  const handleClientSelect = (client: (typeof availableClients)[0]) => {
+  const handleClientSelect = (client: any) => {
     setForm((prev) => ({
       ...prev,
       cliente: client.nombre,
@@ -224,8 +218,15 @@ export default function NuevaFactura() {
         })),
       };
 
-      // Make actual API call
-      const createdInvoice = await ApiClient.post("/invoices", invoiceData) as InvoiceResponse;
+      // Get authentication token
+      const token = await getToken();
+
+      // Make actual API call with token
+      const createdInvoice = (await ApiClient.post(
+        "/invoices",
+        invoiceData,
+        token
+      )) as InvoiceResponse;
 
       alert(`¡Factura creada exitosamente! DTE: ${createdInvoice.dte}`);
 
@@ -316,7 +317,7 @@ export default function NuevaFactura() {
                 <div className="md:col-span-2 border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <h3 className="font-medium mb-3">Seleccionar Cliente:</h3>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {availableClients.map((client, index) => (
+                    {clients.map((client, index) => (
                       <button
                         key={index}
                         type="button"
