@@ -3,12 +3,178 @@
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Required for migrations with connection pooling
+  extensions = [uuid_ossp(map: "uuid-ossp")]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // User's company information
+  companies Company[]
+  
+  @@map("users")
+}
+
+model Company {
+  id              String   @id @default(cuid())
+  name            String
+  nit             String?  // Required for DTE
+  nrc             String?  // Registro de Contribuyente
+  businessName    String?  // Razón social
+  commercialName  String?  // Nombre comercial
+  address         String?
+  department      String?  // Departamento
+  municipality    String?  // Municipio
+  phone           String?
+  email           String?
+  logo            String?
+  economicActivity String? // Actividad económica
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id])
+  clients     Client[]
+  invoices    Invoice[]
+  inventory   InventoryItem[]
+
+  @@map("companies")
+}
+
+model Client {
+  id              String   @id @default(cuid())
+  name            String   // Nombre completo o razón social
+  documentType    String   // DUI, NIT, PASAPORTE, CARNET_EXTRANJERO
+  documentNumber  String
+  nit             String?
+  nrc             String?
+  email           String?
+  phone           String?
+  mobile          String?
+  address         String?
+  department      String?
+  municipality    String?
+  personType      String   // NATURAL, JURIDICA
+  gender          String?  // MASCULINO, FEMENINO (only for natural persons)
+  economicActivity String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  invoices        Invoice[]
+
+  @@unique([documentNumber, companyId])
+  @@map("clients")
+}
+
+model Invoice {
+  id                String           @id @default(cuid())
+  generationCode    String           @unique // Código de generación UUID
+  dteType           InvoiceType      @default(FACTURA)
+  status            InvoiceStatus    @default(PENDIENTE)
+  environment       String           @default("00") // 00=Test, 01=Production
+  transmissionDate  DateTime         @default(now())
+  transmissionTime  String
+  version           Int              @default(2)
+  subtotal          Decimal          @db.Decimal(12,2)
+  iva               Decimal          @db.Decimal(12,2)
+  ivaRetention      Decimal?         @db.Decimal(12,2)
+  total             Decimal          @db.Decimal(12,2)
+  inWords           String           // Total en letras
+  conditions        String           @default("CONTADO") // CONTADO, CREDITO
+  sealReceived      String?          // Sello de recepción del MH
+  processingDate    DateTime?
+  observations      String[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  clientId          String
+  client            Client           @relation(fields: [clientId], references: [id])
+  companyId         String
+  company           Company          @relation(fields: [companyId], references: [id])
+  items             InvoiceItem[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id              String   @id @default(cuid())
+  itemNumber      Int      // Número de ítem
+  description     String
+  quantity        Decimal  @db.Decimal(10,4)
+  unitPrice       Decimal  @db.Decimal(10,4)
+  discount        Decimal? @db.Decimal(10,2) @default(0)
+  subtotal        Decimal  @db.Decimal(12,2)
+  taxes           Decimal  @db.Decimal(12,2)
+  total           Decimal  @db.Decimal(12,2)
+  unit            String   @default("UNIDAD")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  invoiceId       String
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model InventoryItem {
+  id            String   @id @default(cuid())
+  code          String
+  name          String
+  description   String?
+  category      String?
+  price         Decimal  @db.Decimal(10,2)
+  stock         Int      @default(0)
+  minStock      Int      @default(0)
+  unit          String   @default("UNIDAD")
+  supplier      String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id])
+
+  @@unique([code, companyId])
+  @@map("inventory_items")
+}
+
+enum InvoiceStatus {
+  PENDIENTE
+  PROCESADO
+  RECHAZADO
+  ANULADO
+}
+
+enum InvoiceType {
+  FACTURA            // 01
+  CREDITO_FISCAL     // 03
+  NOTA_CREDITO       // 05
+  NOTA_DEBITO        // 06
+  COMPROBANTE_RETENCION // 07
 }
